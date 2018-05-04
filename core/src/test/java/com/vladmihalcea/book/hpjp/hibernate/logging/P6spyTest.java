@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import com.vladmihalcea.book.hpjp.util.AbstractTest;
 import com.vladmihalcea.book.hpjp.util.DataSourceProxyType;
+import com.vladmihalcea.book.hpjp.util.providers.Database;
 import org.junit.Test;
 
 import javax.persistence.Entity;
@@ -15,6 +16,10 @@ import javax.persistence.Version;
  * @author Vlad Mihalcea
  */
 public class P6spyTest extends AbstractTest {
+    @Override
+    protected Database database() {
+        return Database.MYSQL;
+    }
 
     @Override
     protected Class<?>[] entities() {

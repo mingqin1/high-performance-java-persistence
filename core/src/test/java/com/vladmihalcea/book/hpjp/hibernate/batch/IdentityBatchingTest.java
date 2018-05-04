@@ -1,6 +1,8 @@
 package com.vladmihalcea.book.hpjp.hibernate.batch;
 
 import com.vladmihalcea.book.hpjp.util.AbstractTest;
+import com.vladmihalcea.book.hpjp.util.DataSourceProxyType;
+import com.vladmihalcea.book.hpjp.util.providers.Database;
 import org.hibernate.dialect.Dialect;
 import org.junit.Test;
 
@@ -14,6 +16,16 @@ import java.util.Properties;
  * @author Vlad Mihalcea
  */
 public class IdentityBatchingTest extends AbstractTest {
+    
+    @Override
+    protected Database database() {
+        return Database.MYSQL;
+    }
+
+    @Override
+    protected DataSourceProxyType dataSourceProxyType() {
+        return DataSourceProxyType.P6SPY;
+    }
 
     @Override
     protected Class<?>[] entities() {

@@ -1,6 +1,8 @@
 package com.vladmihalcea.book.hpjp.hibernate.batch;
 
 import com.vladmihalcea.book.hpjp.util.AbstractTest;
+import com.vladmihalcea.book.hpjp.util.DataSourceProxyType;
+import com.vladmihalcea.book.hpjp.util.providers.Database;
 import org.hibernate.Session;
 import org.jboss.logging.Logger;
 import org.junit.Test;
@@ -12,106 +14,116 @@ import javax.persistence.*;
  */
 public class BatchTest extends AbstractTest {
 
-	private static final Logger log = Logger.getLogger( BatchTest.class );
+    private static final Logger log = Logger.getLogger(BatchTest.class);
 
-	@Override
-	protected Class<?>[] entities() {
-		return new Class<?>[] {
-			Post.class
-		};
-	}
+    @Override
+    protected Database database() {
+        return Database.MYSQL;
+    }
 
-	@Test
-	public void testScroll() {
-		withBatchAndSessionManagement();
-	}
+    @Override
+    protected DataSourceProxyType dataSourceProxyType() {
+        return DataSourceProxyType.P6SPY;
+    }
 
-	private void withBatch() {
-		int entityCount = 20;
-		EntityManager entityManager = null;
-		EntityTransaction txn = null;
-		try {
-			entityManager = entityManagerFactory().createEntityManager();
-			entityManager.unwrap(Session.class).setJdbcBatchSize(10);
+    @Override
+    protected Class<?>[] entities() {
+        return new Class<?>[]{
+            Post.class
+        };
+    }
 
-			txn = entityManager.getTransaction();
-			txn.begin();
+    @Test
+    public void testScroll() {
+        withBatchAndSessionManagement();
+    }
 
-			int entityManagerBatchSize = 20;
+    private void withBatch() {
+        int entityCount = 20;
+        EntityManager entityManager = null;
+        EntityTransaction txn = null;
+        try {
+            entityManager = entityManagerFactory().createEntityManager();
+            entityManager.unwrap(Session.class).setJdbcBatchSize(10);
 
-			for ( long i = 0; i < entityCount; ++i ) {
-				Post person = new Post( i, String.format( "Post nr %d", i ));
-				entityManager.persist( person );
+            txn = entityManager.getTransaction();
+            txn.begin();
 
-				if ( i > 0 && i % entityManagerBatchSize == 0 ) {
-					entityManager.flush();
-					entityManager.clear();
-				}
-			}
+            int entityManagerBatchSize = 20;
 
-			txn.commit();
-		} catch (RuntimeException e) {
-			if ( txn != null && txn.isActive()) {
-				txn.rollback();
-			}
-			throw e;
-		} finally {
-			if (entityManager != null) {
-				entityManager.close();
-			}
-		}
-	}
+            for (long i = 0; i < entityCount; ++i) {
+                Post person = new Post(i, String.format("Post nr %d", i));
+                entityManager.persist(person);
 
-	private void withBatchAndSessionManagement() {
-		int entityCount = 20;
+                if (i > 0 && i % entityManagerBatchSize == 0) {
+                    entityManager.flush();
+                    entityManager.clear();
+                }
+            }
 
-		doInJPA(entityManager -> {
-			entityManager.unwrap(Session.class).setJdbcBatchSize(10);
+            txn.commit();
+        } catch (RuntimeException e) {
+            if (txn != null && txn.isActive()) {
+                txn.rollback();
+            }
+            throw e;
+        } finally {
+            if (entityManager != null) {
+                entityManager.close();
+            }
+        }
+    }
 
-			for ( long i = 0; i < entityCount; ++i ) {
-				Post person = new Post( i, String.format( "Post nr %d", i ));
-				entityManager.persist( person );
-			}
-		});
-	}
+    private void withBatchAndSessionManagement() {
+        int entityCount = 20;
 
-	private void withBatchAndResetBackToGlobalSetting() {
-		EntityManager entityManager = null;
-		try {
-			entityManager = entityManagerFactory().createEntityManager();
-			entityManager.getTransaction().begin();
+        doInJPA(entityManager -> {
+            entityManager.unwrap(Session.class).setJdbcBatchSize(10);
 
+            for (long i = 0; i < entityCount; ++i) {
+                Post person = new Post(i, String.format("Post nr %d", i));
+                entityManager.persist(person);
+            }
+        });
+    }
 
-		} finally {
-			if (entityManager != null) {
-				entityManager.getTransaction().rollback();
-				entityManager.close();
-			}
-		}
-	}
+    private void withBatchAndResetBackToGlobalSetting() {
+        EntityManager entityManager = null;
+        try {
+            entityManager = entityManagerFactory().createEntityManager();
+            entityManager.getTransaction().begin();
 
-	@Entity(name = "Post")
-	public static class Post {
+        } finally {
+            if (entityManager != null) {
+                entityManager.getTransaction().rollback();
+                entityManager.close();
+            }
+        }
+    }
 
-		@Id
-		private Long id;
+    @Entity(name = "Post")
+    public static class Post {
 
-		private String name;
+        @Id
+        private Long id;
 
-		public Post() {}
+        private String name;
 
-		public Post(long id, String name) {
-			this.id = id;
-			this.name = name;
-		}
+        public Post() {
+        }
 
-		public Long getId() {
-			return id;
-		}
+        public Post(long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
 
-		public String getName() {
-			return name;
-		}
-	}
+        public Long getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 
 }
